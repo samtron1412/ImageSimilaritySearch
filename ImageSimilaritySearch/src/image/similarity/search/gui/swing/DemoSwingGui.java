@@ -83,7 +83,7 @@ public class DemoSwingGui extends JFrame {
     contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
     setContentPane(contentPane);
     GridBagLayout gbl_contentPane = new GridBagLayout();
-    gbl_contentPane.columnWidths = new int[] { 30, 160, 112, 30, 272, 30, 0 };
+    gbl_contentPane.columnWidths = new int[] { 30, 172, 100, 30, 272, 30, 0 };
     gbl_contentPane.rowHeights = new int[] { 30, 0, 30, 0, 30, 30, 30, 30, 0 };
     gbl_contentPane.columnWeights = new double[] { 0.0, 0.0, 1.0, 0.0, 1.0,
         0.0, Double.MIN_VALUE };
