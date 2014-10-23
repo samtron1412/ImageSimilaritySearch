@@ -148,6 +148,8 @@ public class DemoSwingGui extends JFrame {
   public JButton getBtnChooseFirstImage() {
     if (btnChooseFirstImage == null) {
       btnChooseFirstImage = new JButton("Choose First Image");
+      btnChooseFirstImage
+          .addMouseListener(new BtnChooseFirstImageMouseListener());
     }
     return btnChooseFirstImage;
   }
@@ -155,6 +157,8 @@ public class DemoSwingGui extends JFrame {
   public JButton getBtnChooseSecondImage() {
     if (btnChooseSecondImage == null) {
       btnChooseSecondImage = new JButton("Choose Second Image");
+      btnChooseSecondImage
+          .addMouseListener(new BtnChooseSecondImageMouseListener());
     }
     return btnChooseSecondImage;
   }
@@ -192,6 +196,7 @@ public class DemoSwingGui extends JFrame {
   public JButton getBtnCompare() {
     if (btnCompare == null) {
       btnCompare = new JButton("Compare");
+      btnCompare.addMouseListener(new BtnCompareMouseListener());
     }
     return btnCompare;
   }
@@ -208,5 +213,26 @@ public class DemoSwingGui extends JFrame {
       lblShowDistance = new JLabel("0");
     }
     return lblShowDistance;
+  }
+
+  private class BtnChooseFirstImageMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent chooseFirstImageEvent) {
+
+    }
+  }
+
+  private class BtnChooseSecondImageMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent chooseSecondImageEvent) {
+
+    }
+  }
+
+  private class BtnCompareMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent compareEvent) {
+
+    }
   }
 }
