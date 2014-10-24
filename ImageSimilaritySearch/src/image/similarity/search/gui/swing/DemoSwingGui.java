@@ -2,6 +2,9 @@ package image.similarity.search.gui.swing;
 
 import java.awt.EventQueue;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -16,15 +19,14 @@ import java.awt.Insets;
 
 import javax.swing.JLabel;
 
-import java.awt.Color;
-
 import javax.swing.UIManager;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import javax.swing.SwingConstants;
-import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.JScrollPane;
 
 @SuppressWarnings("serial")
 public class DemoSwingGui extends JFrame {
@@ -32,13 +34,13 @@ public class DemoSwingGui extends JFrame {
   private JPanel contentPane;
   private JButton btnChooseFirstImage;
   private JButton btnChooseSecondImage;
-  private JPanel pnShowFirstImage;
-  private JPanel pnShowSecondImage;
   private JLabel lblCompareResult;
   private JLabel lblDistanceBetweenImages;
   private JButton btnCompare;
   private JLabel lblShowResult;
   private JLabel lblShowDistance;
+  private JScrollPane scrollPaneShowFirstImage;
+  private JScrollPane scrollPaneShowSecondImage;
 
   /**
    * Launch the application.
@@ -101,19 +103,19 @@ public class DemoSwingGui extends JFrame {
     gbcBtnChooseSecondImage.gridx = 4;
     gbcBtnChooseSecondImage.gridy = 1;
     contentPane.add(getBtnChooseSecondImage(), gbcBtnChooseSecondImage);
-    GridBagConstraints gbcPnShowFirstImage = new GridBagConstraints();
-    gbcPnShowFirstImage.gridwidth = 2;
-    gbcPnShowFirstImage.insets = new Insets(0, 0, 5, 5);
-    gbcPnShowFirstImage.fill = GridBagConstraints.BOTH;
-    gbcPnShowFirstImage.gridx = 1;
-    gbcPnShowFirstImage.gridy = 3;
-    contentPane.add(getPnShowFirstImage(), gbcPnShowFirstImage);
-    GridBagConstraints gbcPnShowSecondImage = new GridBagConstraints();
-    gbcPnShowSecondImage.insets = new Insets(0, 0, 5, 5);
-    gbcPnShowSecondImage.fill = GridBagConstraints.BOTH;
-    gbcPnShowSecondImage.gridx = 4;
-    gbcPnShowSecondImage.gridy = 3;
-    contentPane.add(getPnShowSecondImage(), gbcPnShowSecondImage);
+    GridBagConstraints gbc_scrollPaneShowFirstImage = new GridBagConstraints();
+    gbc_scrollPaneShowFirstImage.gridwidth = 2;
+    gbc_scrollPaneShowFirstImage.insets = new Insets(0, 0, 5, 5);
+    gbc_scrollPaneShowFirstImage.fill = GridBagConstraints.BOTH;
+    gbc_scrollPaneShowFirstImage.gridx = 1;
+    gbc_scrollPaneShowFirstImage.gridy = 3;
+    contentPane.add(getScrollPane_1(), gbc_scrollPaneShowFirstImage);
+    GridBagConstraints gbc_scrollPaneShowSecondImage = new GridBagConstraints();
+    gbc_scrollPaneShowSecondImage.insets = new Insets(0, 0, 5, 5);
+    gbc_scrollPaneShowSecondImage.fill = GridBagConstraints.BOTH;
+    gbc_scrollPaneShowSecondImage.gridx = 4;
+    gbc_scrollPaneShowSecondImage.gridy = 3;
+    contentPane.add(getScrollPane_2(), gbc_scrollPaneShowSecondImage);
     GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
     gbcLblCompareResult.anchor = GridBagConstraints.EAST;
     gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
@@ -163,22 +165,6 @@ public class DemoSwingGui extends JFrame {
     return btnChooseSecondImage;
   }
 
-  public JPanel getPnShowFirstImage() {
-    if (pnShowFirstImage == null) {
-      pnShowFirstImage = new JPanel();
-      pnShowFirstImage.setBackground(Color.WHITE);
-    }
-    return pnShowFirstImage;
-  }
-
-  public JPanel getPnShowSecondImage() {
-    if (pnShowSecondImage == null) {
-      pnShowSecondImage = new JPanel();
-      pnShowSecondImage.setBackground(Color.WHITE);
-    }
-    return pnShowSecondImage;
-  }
-
   public JLabel getLblCompareResult() {
     if (lblCompareResult == null) {
       lblCompareResult = new JLabel("Compare Result: ");
@@ -215,24 +201,74 @@ public class DemoSwingGui extends JFrame {
     return lblShowDistance;
   }
 
+  public JScrollPane getScrollPane_1() {
+    if (scrollPaneShowFirstImage == null) {
+      scrollPaneShowFirstImage = new JScrollPane();
+    }
+    return scrollPaneShowFirstImage;
+  }
+
+  public JScrollPane getScrollPane_2() {
+    if (scrollPaneShowSecondImage == null) {
+      scrollPaneShowSecondImage = new JScrollPane();
+    }
+    return scrollPaneShowSecondImage;
+  }
+
   private class BtnChooseFirstImageMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent chooseFirstImageEvent) {
+      JFileChooser firstFileChooser = new JFileChooser();
+      int returnVal = firstFileChooser.showOpenDialog(getBtnChooseFirstImage());
 
+      if (returnVal == JFileChooser.APPROVE_OPTION) {
+        File firstFile = firstFileChooser.getSelectedFile();
+        try {
+          BufferedImage firstImage = ImageIO
+              .read(new File(firstFile.getPath()));
+          /*
+           * Image scaledFirstImage = firstImage.getScaledInstance(
+           * pnShowFirstImage.getWidth(), pnShowFirstImage.getHeight(),
+           * Image.SCALE_SMOOTH);
+           */
+          JLabel lblFirstImage = new JLabel(new ImageIcon(firstImage));
+          scrollPaneShowFirstImage.setViewportView(lblFirstImage);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 
   private class BtnChooseSecondImageMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent chooseSecondImageEvent) {
+      JFileChooser secondFileChooser = new JFileChooser();
+      int returnVal = secondFileChooser.showOpenDialog(getBtnChooseSecondImage());
 
+      if (returnVal == JFileChooser.APPROVE_OPTION) {
+        File secondFile = secondFileChooser.getSelectedFile();
+        try {
+          BufferedImage secondImage = ImageIO
+              .read(new File(secondFile.getPath()));
+          /*
+           * Image scaledFirstImage = firstImage.getScaledInstance(
+           * pnShowFirstImage.getWidth(), pnShowFirstImage.getHeight(),
+           * Image.SCALE_SMOOTH);
+           */
+          JLabel lblSecondImage = new JLabel(new ImageIcon(secondImage));
+          scrollPaneShowSecondImage.setViewportView(lblSecondImage);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 
   private class BtnCompareMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent compareEvent) {
-
+      //TODO: implement image processing here
     }
   }
 }
