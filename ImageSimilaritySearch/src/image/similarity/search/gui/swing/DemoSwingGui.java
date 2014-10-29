@@ -1,5 +1,7 @@
 package image.similarity.search.gui.swing;
 
+import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
+
 import java.awt.EventQueue;
 
 import javax.imageio.ImageIO;
@@ -18,7 +20,6 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import javax.swing.JLabel;
-
 import javax.swing.UIManager;
 
 import java.awt.event.MouseAdapter;
@@ -26,21 +27,29 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+
 import javax.swing.JScrollPane;
+
+import org.bytedeco.javacpp.opencv_core.IplImage;
+import org.bytedeco.javacv.CanvasFrame;
 
 @SuppressWarnings("serial")
 public class DemoSwingGui extends JFrame {
 
   private JPanel contentPane;
-  private JButton btnChooseFirstImage;
-  private JButton btnChooseSecondImage;
-  private JLabel lblCompareResult;
-  private JLabel lblDistanceBetweenImages;
-  private JButton btnCompare;
-  private JLabel lblShowResult;
-  private JLabel lblShowDistance;
-  private JScrollPane scrollPaneShowFirstImage;
-  private JScrollPane scrollPaneShowSecondImage;
+  protected JButton btnChooseFirstImage;
+  protected JButton btnChooseSecondImage;
+  protected JScrollPane scrollPaneShowFirstImage;
+  protected JScrollPane scrollPaneShowSecondImage;
+  protected JLabel lblShowFirstImage;
+  protected JLabel lblShowSecondImage;
+  protected JLabel lblCompareResult;
+  protected JLabel lblDistanceBetweenImages;
+  protected JButton btnCompare;
+  protected JLabel lblShowResult;
+  protected JLabel lblShowDistance;
+  protected File firstFile;
+  protected File secondFile;
 
   /**
    * Launch the application.
@@ -92,147 +101,104 @@ public class DemoSwingGui extends JFrame {
     gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, Double.MIN_VALUE };
     contentPane.setLayout(gbl_contentPane);
+
+    btnChooseFirstImage = new JButton("Choose First Image");
+    btnChooseFirstImage
+        .addMouseListener(new BtnChooseFirstImageMouseListener());
     GridBagConstraints gbcBtnChooseFirstImage = new GridBagConstraints();
     gbcBtnChooseFirstImage.gridwidth = 2;
     gbcBtnChooseFirstImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseFirstImage.gridx = 1;
     gbcBtnChooseFirstImage.gridy = 1;
-    contentPane.add(getBtnChooseFirstImage(), gbcBtnChooseFirstImage);
+    contentPane.add(btnChooseFirstImage, gbcBtnChooseFirstImage);
+
+    btnChooseSecondImage = new JButton("Choose Second Image");
+    btnChooseSecondImage
+        .addMouseListener(new BtnChooseSecondImageMouseListener());
     GridBagConstraints gbcBtnChooseSecondImage = new GridBagConstraints();
     gbcBtnChooseSecondImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseSecondImage.gridx = 4;
     gbcBtnChooseSecondImage.gridy = 1;
-    contentPane.add(getBtnChooseSecondImage(), gbcBtnChooseSecondImage);
-    GridBagConstraints gbc_scrollPaneShowFirstImage = new GridBagConstraints();
-    gbc_scrollPaneShowFirstImage.gridwidth = 2;
-    gbc_scrollPaneShowFirstImage.insets = new Insets(0, 0, 5, 5);
-    gbc_scrollPaneShowFirstImage.fill = GridBagConstraints.BOTH;
-    gbc_scrollPaneShowFirstImage.gridx = 1;
-    gbc_scrollPaneShowFirstImage.gridy = 3;
-    contentPane.add(getScrollPane_1(), gbc_scrollPaneShowFirstImage);
-    GridBagConstraints gbc_scrollPaneShowSecondImage = new GridBagConstraints();
-    gbc_scrollPaneShowSecondImage.insets = new Insets(0, 0, 5, 5);
-    gbc_scrollPaneShowSecondImage.fill = GridBagConstraints.BOTH;
-    gbc_scrollPaneShowSecondImage.gridx = 4;
-    gbc_scrollPaneShowSecondImage.gridy = 3;
-    contentPane.add(getScrollPane_2(), gbc_scrollPaneShowSecondImage);
+    contentPane.add(btnChooseSecondImage, gbcBtnChooseSecondImage);
+
+    scrollPaneShowFirstImage = new JScrollPane();
+    GridBagConstraints gbcScrollPaneShowFirstImage = new GridBagConstraints();
+    gbcScrollPaneShowFirstImage.gridwidth = 2;
+    gbcScrollPaneShowFirstImage.insets = new Insets(0, 0, 5, 5);
+    gbcScrollPaneShowFirstImage.fill = GridBagConstraints.BOTH;
+    gbcScrollPaneShowFirstImage.gridx = 1;
+    gbcScrollPaneShowFirstImage.gridy = 3;
+    contentPane.add(scrollPaneShowFirstImage, gbcScrollPaneShowFirstImage);
+
+    lblShowFirstImage = new JLabel("");
+    lblShowFirstImage.addMouseListener(new LblShowFirstImageMouseListener());
+    scrollPaneShowFirstImage.setViewportView(lblShowFirstImage);
+
+    scrollPaneShowSecondImage = new JScrollPane();
+    GridBagConstraints gbcScrollPaneShowSecondImage = new GridBagConstraints();
+    gbcScrollPaneShowSecondImage.insets = new Insets(0, 0, 5, 5);
+    gbcScrollPaneShowSecondImage.fill = GridBagConstraints.BOTH;
+    gbcScrollPaneShowSecondImage.gridx = 4;
+    gbcScrollPaneShowSecondImage.gridy = 3;
+    contentPane.add(scrollPaneShowSecondImage, gbcScrollPaneShowSecondImage);
+
+    lblShowSecondImage = new JLabel("");
+    lblShowSecondImage.addMouseListener(new LblShowSecondImageMouseListener());
+    scrollPaneShowSecondImage.setViewportView(lblShowSecondImage);
+
+    lblCompareResult = new JLabel("Compare Result: ");
     GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
     gbcLblCompareResult.anchor = GridBagConstraints.EAST;
     gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
     gbcLblCompareResult.gridx = 1;
     gbcLblCompareResult.gridy = 5;
-    contentPane.add(getLblCompareResult(), gbcLblCompareResult);
+    contentPane.add(lblCompareResult, gbcLblCompareResult);
+
+    lblShowResult = new JLabel("0 %");
     GridBagConstraints gbcLblShowResult = new GridBagConstraints();
     gbcLblShowResult.anchor = GridBagConstraints.WEST;
     gbcLblShowResult.insets = new Insets(0, 0, 5, 5);
     gbcLblShowResult.gridx = 2;
     gbcLblShowResult.gridy = 5;
-    contentPane.add(getLblShowResult(), gbcLblShowResult);
+    contentPane.add(lblShowResult, gbcLblShowResult);
+
+    btnCompare = new JButton("Compare");
     GridBagConstraints gbcBtnCompare = new GridBagConstraints();
     gbcBtnCompare.insets = new Insets(0, 0, 5, 5);
     gbcBtnCompare.gridx = 4;
     gbcBtnCompare.gridy = 5;
-    contentPane.add(getBtnCompare(), gbcBtnCompare);
+    contentPane.add(btnCompare, gbcBtnCompare);
+
+    lblDistanceBetweenImages = new JLabel("Distance Between Images: ");
     GridBagConstraints gbcLblDistanceBetweenImages = new GridBagConstraints();
     gbcLblDistanceBetweenImages.anchor = GridBagConstraints.EAST;
     gbcLblDistanceBetweenImages.insets = new Insets(0, 0, 5, 5);
     gbcLblDistanceBetweenImages.gridx = 1;
     gbcLblDistanceBetweenImages.gridy = 6;
-    contentPane.add(getLblDistanceBetweenImages(), gbcLblDistanceBetweenImages);
+    contentPane.add(lblDistanceBetweenImages, gbcLblDistanceBetweenImages);
+
+    lblShowDistance = new JLabel("0");
     GridBagConstraints gbcLblShowDistance = new GridBagConstraints();
     gbcLblShowDistance.anchor = GridBagConstraints.WEST;
     gbcLblShowDistance.insets = new Insets(0, 0, 5, 5);
     gbcLblShowDistance.gridx = 2;
     gbcLblShowDistance.gridy = 6;
-    contentPane.add(getLblShowDistance(), gbcLblShowDistance);
-  }
-
-  public JButton getBtnChooseFirstImage() {
-    if (btnChooseFirstImage == null) {
-      btnChooseFirstImage = new JButton("Choose First Image");
-      btnChooseFirstImage
-          .addMouseListener(new BtnChooseFirstImageMouseListener());
-    }
-    return btnChooseFirstImage;
-  }
-
-  public JButton getBtnChooseSecondImage() {
-    if (btnChooseSecondImage == null) {
-      btnChooseSecondImage = new JButton("Choose Second Image");
-      btnChooseSecondImage
-          .addMouseListener(new BtnChooseSecondImageMouseListener());
-    }
-    return btnChooseSecondImage;
-  }
-
-  public JLabel getLblCompareResult() {
-    if (lblCompareResult == null) {
-      lblCompareResult = new JLabel("Compare Result: ");
-    }
-    return lblCompareResult;
-  }
-
-  public JLabel getLblDistanceBetweenImages() {
-    if (lblDistanceBetweenImages == null) {
-      lblDistanceBetweenImages = new JLabel("Distance Between Images: ");
-    }
-    return lblDistanceBetweenImages;
-  }
-
-  public JButton getBtnCompare() {
-    if (btnCompare == null) {
-      btnCompare = new JButton("Compare");
-      btnCompare.addMouseListener(new BtnCompareMouseListener());
-    }
-    return btnCompare;
-  }
-
-  public JLabel getLblShowResult() {
-    if (lblShowResult == null) {
-      lblShowResult = new JLabel("0 %");
-    }
-    return lblShowResult;
-  }
-
-  public JLabel getLblShowDistance() {
-    if (lblShowDistance == null) {
-      lblShowDistance = new JLabel("0");
-    }
-    return lblShowDistance;
-  }
-
-  public JScrollPane getScrollPane_1() {
-    if (scrollPaneShowFirstImage == null) {
-      scrollPaneShowFirstImage = new JScrollPane();
-    }
-    return scrollPaneShowFirstImage;
-  }
-
-  public JScrollPane getScrollPane_2() {
-    if (scrollPaneShowSecondImage == null) {
-      scrollPaneShowSecondImage = new JScrollPane();
-    }
-    return scrollPaneShowSecondImage;
+    contentPane.add(lblShowDistance, gbcLblShowDistance);
   }
 
   private class BtnChooseFirstImageMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent chooseFirstImageEvent) {
       JFileChooser firstFileChooser = new JFileChooser();
-      int returnVal = firstFileChooser.showOpenDialog(getBtnChooseFirstImage());
+      int returnVal = firstFileChooser.showOpenDialog(btnChooseFirstImage);
 
       if (returnVal == JFileChooser.APPROVE_OPTION) {
-        File firstFile = firstFileChooser.getSelectedFile();
+        firstFile = firstFileChooser.getSelectedFile();
         try {
           BufferedImage firstImage = ImageIO
               .read(new File(firstFile.getPath()));
-          /*
-           * Image scaledFirstImage = firstImage.getScaledInstance(
-           * pnShowFirstImage.getWidth(), pnShowFirstImage.getHeight(),
-           * Image.SCALE_SMOOTH);
-           */
-          JLabel lblFirstImage = new JLabel(new ImageIcon(firstImage));
-          scrollPaneShowFirstImage.setViewportView(lblFirstImage);
+          lblShowFirstImage.setIcon(new ImageIcon(firstImage));
+          scrollPaneShowFirstImage.setViewportView(lblShowFirstImage);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -244,20 +210,15 @@ public class DemoSwingGui extends JFrame {
     @Override
     public void mouseClicked(MouseEvent chooseSecondImageEvent) {
       JFileChooser secondFileChooser = new JFileChooser();
-      int returnVal = secondFileChooser.showOpenDialog(getBtnChooseSecondImage());
+      int returnVal = secondFileChooser.showOpenDialog(lblShowSecondImage);
 
       if (returnVal == JFileChooser.APPROVE_OPTION) {
-        File secondFile = secondFileChooser.getSelectedFile();
+        secondFile = secondFileChooser.getSelectedFile();
         try {
-          BufferedImage secondImage = ImageIO
-              .read(new File(secondFile.getPath()));
-          /*
-           * Image scaledFirstImage = firstImage.getScaledInstance(
-           * pnShowFirstImage.getWidth(), pnShowFirstImage.getHeight(),
-           * Image.SCALE_SMOOTH);
-           */
-          JLabel lblSecondImage = new JLabel(new ImageIcon(secondImage));
-          scrollPaneShowSecondImage.setViewportView(lblSecondImage);
+          BufferedImage secondImage = ImageIO.read(new File(secondFile
+              .getPath()));
+          lblShowSecondImage.setIcon(new ImageIcon(secondImage));
+          scrollPaneShowSecondImage.setViewportView(lblShowSecondImage);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -265,10 +226,31 @@ public class DemoSwingGui extends JFrame {
     }
   }
 
-  private class BtnCompareMouseListener extends MouseAdapter {
+  private class LblShowFirstImageMouseListener extends MouseAdapter {
     @Override
-    public void mouseClicked(MouseEvent compareEvent) {
-      //TODO: implement image processing here
+    public void mouseClicked(MouseEvent showFirstImageEvent) {
+      if (showFirstImageEvent.getClickCount() % 2 == 0) {
+        if (firstFile != null) {
+          final IplImage firstIplImage = cvLoadImage(firstFile.getPath());
+          final CanvasFrame firstCanvas = new CanvasFrame("First Image", 1);
+          // firstCanvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+          firstCanvas.showImage(firstIplImage);
+        }
+      }
+    }
+  }
+
+  private class LblShowSecondImageMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent showSecondImageEvent) {
+      if (showSecondImageEvent.getClickCount() % 2 == 0) {
+        if (secondFile != null) {
+          final IplImage secondIplImage = cvLoadImage(secondFile.getPath());
+          final CanvasFrame secondCanvas = new CanvasFrame("Second Image", 1);
+          // firstCanvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+          secondCanvas.showImage(secondIplImage);
+        }
+      }
     }
   }
 }
