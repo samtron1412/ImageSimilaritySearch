@@ -1,6 +1,8 @@
 package image.similarity.search.gui.swing;
 
 import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
+import image.similarity.search.compare.DynamicTimeWarping;
+import image.similarity.search.timeseries.RadicalScanning;
 
 import java.awt.EventQueue;
 
@@ -32,6 +34,7 @@ import javax.swing.JScrollPane;
 
 import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.CanvasFrame;
+import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
 public class DemoSwingGui extends JFrame {
@@ -50,6 +53,10 @@ public class DemoSwingGui extends JFrame {
   protected JLabel lblShowDistance;
   protected File firstFile;
   protected File secondFile;
+  protected JButton btnViewContour;
+  protected JButton btnShowTimeSeries;
+  protected JButton btnV;
+  protected JButton button_1;
 
   /**
    * Launch the application.
@@ -89,16 +96,16 @@ public class DemoSwingGui extends JFrame {
 
   private void initGUI() {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setBounds(100, 100, 700, 500);
+    setBounds(100, 100, 790, 600);
     contentPane = new JPanel();
     contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
     setContentPane(contentPane);
     GridBagLayout gbl_contentPane = new GridBagLayout();
-    gbl_contentPane.columnWidths = new int[] { 30, 172, 100, 30, 272, 30, 0 };
-    gbl_contentPane.rowHeights = new int[] { 30, 0, 30, 0, 30, 30, 30, 30, 0 };
-    gbl_contentPane.columnWeights = new double[] { 0.0, 0.0, 1.0, 0.0, 1.0,
+    gbl_contentPane.columnWidths = new int[] { 30, 175, 175, 30, 175, 175, 30, 0 };
+    gbl_contentPane.rowHeights = new int[] { 30, 0, 30, 0, 0, 30, 0, 30, 30, 30, 0 };
+    gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
         0.0, Double.MIN_VALUE };
-    gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+    gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, Double.MIN_VALUE };
     contentPane.setLayout(gbl_contentPane);
 
@@ -116,6 +123,7 @@ public class DemoSwingGui extends JFrame {
     btnChooseSecondImage
         .addMouseListener(new BtnChooseSecondImageMouseListener());
     GridBagConstraints gbcBtnChooseSecondImage = new GridBagConstraints();
+    gbcBtnChooseSecondImage.gridwidth = 2;
     gbcBtnChooseSecondImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseSecondImage.gridx = 4;
     gbcBtnChooseSecondImage.gridy = 1;
@@ -123,8 +131,8 @@ public class DemoSwingGui extends JFrame {
 
     scrollPaneShowFirstImage = new JScrollPane();
     GridBagConstraints gbcScrollPaneShowFirstImage = new GridBagConstraints();
-    gbcScrollPaneShowFirstImage.gridwidth = 2;
     gbcScrollPaneShowFirstImage.insets = new Insets(0, 0, 5, 5);
+    gbcScrollPaneShowFirstImage.gridwidth = 2;
     gbcScrollPaneShowFirstImage.fill = GridBagConstraints.BOTH;
     gbcScrollPaneShowFirstImage.gridx = 1;
     gbcScrollPaneShowFirstImage.gridy = 3;
@@ -137,6 +145,7 @@ public class DemoSwingGui extends JFrame {
     scrollPaneShowSecondImage = new JScrollPane();
     GridBagConstraints gbcScrollPaneShowSecondImage = new GridBagConstraints();
     gbcScrollPaneShowSecondImage.insets = new Insets(0, 0, 5, 5);
+    gbcScrollPaneShowSecondImage.gridwidth = 2;
     gbcScrollPaneShowSecondImage.fill = GridBagConstraints.BOTH;
     gbcScrollPaneShowSecondImage.gridx = 4;
     gbcScrollPaneShowSecondImage.gridy = 3;
@@ -145,13 +154,41 @@ public class DemoSwingGui extends JFrame {
     lblShowSecondImage = new JLabel("");
     lblShowSecondImage.addMouseListener(new LblShowSecondImageMouseListener());
     scrollPaneShowSecondImage.setViewportView(lblShowSecondImage);
+    
+    btnViewContour = new JButton("View Contour");
+    GridBagConstraints gbcBtnViewContour = new GridBagConstraints();
+    gbcBtnViewContour.insets = new Insets(0, 0, 5, 5);
+    gbcBtnViewContour.gridx = 1;
+    gbcBtnViewContour.gridy = 5;
+    contentPane.add(btnViewContour, gbcBtnViewContour);
+    
+    btnShowTimeSeries = new JButton("Show Time Series");
+    GridBagConstraints gbcBtnShowTimeSeries = new GridBagConstraints();
+    gbcBtnShowTimeSeries.insets = new Insets(0, 0, 5, 5);
+    gbcBtnShowTimeSeries.gridx = 2;
+    gbcBtnShowTimeSeries.gridy = 5;
+    contentPane.add(btnShowTimeSeries, gbcBtnShowTimeSeries);
+    
+    btnV = new JButton("View Contour");
+    GridBagConstraints gbcBtnV = new GridBagConstraints();
+    gbcBtnV.insets = new Insets(0, 0, 5, 5);
+    gbcBtnV.gridx = 4;
+    gbcBtnV.gridy = 5;
+    contentPane.add(btnV, gbcBtnV);
+    
+    button_1 = new JButton("Show Time Series");
+    GridBagConstraints gbcButton_1 = new GridBagConstraints();
+    gbcButton_1.insets = new Insets(0, 0, 5, 5);
+    gbcButton_1.gridx = 5;
+    gbcButton_1.gridy = 5;
+    contentPane.add(button_1, gbcButton_1);
 
     lblCompareResult = new JLabel("Compare Result: ");
     GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
     gbcLblCompareResult.anchor = GridBagConstraints.EAST;
     gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
     gbcLblCompareResult.gridx = 1;
-    gbcLblCompareResult.gridy = 5;
+    gbcLblCompareResult.gridy = 7;
     contentPane.add(lblCompareResult, gbcLblCompareResult);
 
     lblShowResult = new JLabel("0 %");
@@ -159,14 +196,16 @@ public class DemoSwingGui extends JFrame {
     gbcLblShowResult.anchor = GridBagConstraints.WEST;
     gbcLblShowResult.insets = new Insets(0, 0, 5, 5);
     gbcLblShowResult.gridx = 2;
-    gbcLblShowResult.gridy = 5;
+    gbcLblShowResult.gridy = 7;
     contentPane.add(lblShowResult, gbcLblShowResult);
 
     btnCompare = new JButton("Compare");
+    btnCompare.addMouseListener(new BtnCompareMouseListener());
     GridBagConstraints gbcBtnCompare = new GridBagConstraints();
+    gbcBtnCompare.gridwidth = 2;
     gbcBtnCompare.insets = new Insets(0, 0, 5, 5);
     gbcBtnCompare.gridx = 4;
-    gbcBtnCompare.gridy = 5;
+    gbcBtnCompare.gridy = 7;
     contentPane.add(btnCompare, gbcBtnCompare);
 
     lblDistanceBetweenImages = new JLabel("Distance Between Images: ");
@@ -174,7 +213,7 @@ public class DemoSwingGui extends JFrame {
     gbcLblDistanceBetweenImages.anchor = GridBagConstraints.EAST;
     gbcLblDistanceBetweenImages.insets = new Insets(0, 0, 5, 5);
     gbcLblDistanceBetweenImages.gridx = 1;
-    gbcLblDistanceBetweenImages.gridy = 6;
+    gbcLblDistanceBetweenImages.gridy = 8;
     contentPane.add(lblDistanceBetweenImages, gbcLblDistanceBetweenImages);
 
     lblShowDistance = new JLabel("0");
@@ -182,7 +221,7 @@ public class DemoSwingGui extends JFrame {
     gbcLblShowDistance.anchor = GridBagConstraints.WEST;
     gbcLblShowDistance.insets = new Insets(0, 0, 5, 5);
     gbcLblShowDistance.gridx = 2;
-    gbcLblShowDistance.gridy = 6;
+    gbcLblShowDistance.gridy = 8;
     contentPane.add(lblShowDistance, gbcLblShowDistance);
   }
 
@@ -250,6 +289,20 @@ public class DemoSwingGui extends JFrame {
           // firstCanvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
           secondCanvas.showImage(secondIplImage);
         }
+      }
+    }
+  }
+  
+  private class BtnCompareMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent compareEvent) {
+      if (firstFile != null && secondFile != null) {
+        float[] firstTimeSeries = RadicalScanning.imageToContour(firstFile.getPath());        
+        float[] secondTimeSeries = RadicalScanning.imageToContour(secondFile.getPath());
+        DynamicTimeWarping dtw = new DynamicTimeWarping(firstTimeSeries, secondTimeSeries);
+        lblShowDistance.setText(Double.toString(dtw.getDistance()));
+      } else {
+        System.out.println("You not yet choose file.");
       }
     }
   }
