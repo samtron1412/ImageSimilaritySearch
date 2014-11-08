@@ -1,5 +1,6 @@
 package image.similarity.search.timeseries;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.bytedeco.javacpp.Loader;
@@ -25,9 +26,11 @@ public class RadicalScanning {
     cvCvtColor(src, grayImage, CV_BGR2GRAY);
 
     // modify gray image with threshold
-    cvThreshold(grayImage, grayImage, 10, 255, CV_THRESH_BINARY);
+//     cvThreshold(grayImage, grayImage, 10, 255, CV_THRESH_BINARY);
+    cvAdaptiveThreshold(grayImage, grayImage, 255,
+        CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 15, 0);
 
-    // create new memory to store svseq
+    // create new memory to store cvseq
     CvMemStorage memory = CvMemStorage.create();
 
     // create contours sequence
@@ -42,9 +45,6 @@ public class RadicalScanning {
     double largestArea = 0;
     while (contours != null && !contours.isNull()) {
       double area = cvContourArea(contours);
-//      System.out.println(contours.total());
-//      System.out.println("Area: " + area);
-//      System.out.println("Largest Area: " + largestArea);
       if (area > 0) {
         if (area > largestArea) {
           largestArea = area;
@@ -53,10 +53,13 @@ public class RadicalScanning {
       }
       contours = contours.h_next();
     }
+    System.out.println("Largest Area: " + largestArea);
+    System.out.println("Largest Contours: " + largestContour.total());
 
-    cvDrawContours(src, largestContour, CvScalar.YELLOW, CvScalar.RED, -1, 1, CV_AA);
+    cvDrawContours(src, largestContour, CvScalar.YELLOW, CvScalar.RED, -1, 1,
+        CV_AA);
 
-//    System.out.println(largestContour.total());
+    // System.out.println(largestContour.total());
 
     // find center point of points
     CvRect rect = cvBoundingRect(largestContour, 0);
@@ -65,29 +68,33 @@ public class RadicalScanning {
     centerPoint.y(rect.y() + rect.height() / 2);
     cvDrawCircle(src, centerPoint, 5, CvScalar.RED, -1, 8, 0);
 
-   
+    // find array store distance value between center point and current point
     ArrayList<Double> euclideanDistance = new ArrayList<Double>();
     for (int j = 0; j < largestContour.total(); j++) {
-      CvPoint currentPoint = new CvPoint(cvGetSeqElem(largestContour,j));
-      euclideanDistance.add(Math.sqrt(Math.pow(currentPoint.x()-centerPoint.x(), 2) + Math.pow(currentPoint.y()-centerPoint.y(), 2)));
+      CvPoint currentPoint = new CvPoint(cvGetSeqElem(largestContour, j));
+      euclideanDistance.add(Math.sqrt(Math.pow(
+          currentPoint.x() - centerPoint.x(), 2)
+          + Math.pow(currentPoint.y() - centerPoint.y(), 2)));
     }
-//    System.out.println(euclideanDistance);
-    
-    float[] target = new float[euclideanDistance.size()];
-    for (int i = 0; i < target.length; i++) {
-       target[i] = euclideanDistance.get(i).floatValue();       
-    } 
-    
-    String[] pathArr = srcPath.split("/");
+    // System.out.println(euclideanDistance);
 
-    String targetPath = "Images\\" + pathArr[pathArr.length-1];
-    cvSaveImage(targetPath, src);
+    // distance is an array store distance value
+    float[] distance = new float[euclideanDistance.size()];
+    for (int i = 0; i < distance.length; i++) {
+      distance[i] = euclideanDistance.get(i).floatValue();
+    }
 
-//    System.exit(0);
-    return target;
+    File dstFile = new File(srcPath);
+    String dstPath = "Images\\dst\\" + dstFile.getName();
+    // System.out.println(targetPath);
+    cvSaveImage(dstPath, src);
+
+    return distance;
   }
+
   public static void main(String[] args) {
     imageToContour("Images\\skull.jpg");
+//    imageToContour("Images\\body.jpg");
   }
 
 }
