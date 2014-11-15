@@ -2,6 +2,7 @@ package image.similarity.search.gui.swing;
 
 import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
 import image.similarity.search.compare.DynamicTimeWarping;
+import image.similarity.search.contour.Contour;
 import image.similarity.search.timeseries.RadicalScanning;
 
 import java.awt.EventQueue;
@@ -29,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.swing.JScrollPane;
 
@@ -301,10 +303,10 @@ public class DemoSwingGui extends JFrame {
     @Override
     public void mouseClicked(MouseEvent compareEvent) {
       if (firstFile != null && secondFile != null) {
-        float[] firstTimeSeries = RadicalScanning.imageToContour(firstFile
-            .getPath());
-        float[] secondTimeSeries = RadicalScanning.imageToContour(secondFile
-            .getPath());
+        Map<String, Object> firstContourMap = Contour.imageToContour(firstFile.getPath());
+        float[] firstTimeSeries = RadicalScanning.contourToTimeSeries(firstContourMap);
+        Map<String, Object> secondContourMap = Contour.imageToContour(secondFile.getPath()); 
+        float[] secondTimeSeries = RadicalScanning.contourToTimeSeries(secondContourMap);
         DynamicTimeWarping dtw = new DynamicTimeWarping(firstTimeSeries,
             secondTimeSeries);
         lblShowDistance.setText(Double.toString(dtw.getDistance()));
