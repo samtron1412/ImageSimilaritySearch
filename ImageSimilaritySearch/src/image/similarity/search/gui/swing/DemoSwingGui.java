@@ -4,6 +4,7 @@ import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
 import image.similarity.search.compare.DynamicTimeWarping;
 import image.similarity.search.contour.Contour;
 import image.similarity.search.timeseries.RadicalScanning;
+import image.similarity.search.timeseries.ShowLineChart;
 
 import java.awt.EventQueue;
 
@@ -11,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.EmptyBorder;
@@ -19,6 +21,7 @@ import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
 
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
@@ -36,6 +39,7 @@ import javax.swing.JScrollPane;
 
 import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.CanvasFrame;
+import org.jfree.ui.RefineryUtilities;
 
 @SuppressWarnings("serial")
 public class DemoSwingGui extends JFrame {
@@ -47,17 +51,18 @@ public class DemoSwingGui extends JFrame {
   protected JScrollPane scrollPaneShowSecondImage;
   protected JLabel lblShowFirstImage;
   protected JLabel lblShowSecondImage;
-  protected JLabel lblCompareResult;
-  protected JLabel lblDistanceBetweenImages;
   protected JButton btnCompare;
-  protected JLabel lblShowResult;
-  protected JLabel lblShowDistance;
   protected File firstFile;
   protected File secondFile;
   protected JButton btnShowFirstContour;
-  protected JButton btnShowFirstTimeSeries;
+  protected JButton btnShowTimeSeries;
   protected JButton btnShowSecondContour;
-  protected JButton btnShowSecondTimeSeries;
+  protected JLabel lblShowDistance;
+  protected JLabel lblDistance;
+  protected JLabel lblCompareResult;
+  protected JLabel lblShowPercent;
+  protected float[] firstTimeSeries;
+  protected float[] secondTimeSeries;
 
   /**
    * Launch the application.
@@ -104,19 +109,17 @@ public class DemoSwingGui extends JFrame {
     GridBagLayout gbl_contentPane = new GridBagLayout();
     gbl_contentPane.columnWidths = new int[] { 30, 175, 175, 30, 175, 175, 30,
         0 };
-    gbl_contentPane.rowHeights = new int[] { 30, 0, 30, 0, 30, 0, 30, 0, 0,
-        30, 0 };
+    gbl_contentPane.rowHeights = new int[] { 30, 0, 30, 0, 30, 21, 30, 30, 0 };
     gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 1.0, 0.0, 1.0,
         1.0, 0.0, Double.MIN_VALUE };
     gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+        0.0, 0.0, Double.MIN_VALUE };
     contentPane.setLayout(gbl_contentPane);
 
     btnChooseFirstImage = new JButton("Choose First Image");
     btnChooseFirstImage
         .addMouseListener(new BtnChooseFirstImageMouseListener());
     GridBagConstraints gbcBtnChooseFirstImage = new GridBagConstraints();
-    gbcBtnChooseFirstImage.gridwidth = 2;
     gbcBtnChooseFirstImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseFirstImage.gridx = 1;
     gbcBtnChooseFirstImage.gridy = 1;
@@ -125,12 +128,31 @@ public class DemoSwingGui extends JFrame {
     btnChooseSecondImage = new JButton("Choose Second Image");
     btnChooseSecondImage
         .addMouseListener(new BtnChooseSecondImageMouseListener());
+
+    btnShowFirstContour = new JButton("Show First Contour");
+    btnShowFirstContour.setEnabled(false);
+    btnShowFirstContour
+        .addMouseListener(new BtnShowFirstContourMouseListener());
+    GridBagConstraints gbcBtnShowFirstContour = new GridBagConstraints();
+    gbcBtnShowFirstContour.insets = new Insets(0, 0, 5, 5);
+    gbcBtnShowFirstContour.gridx = 2;
+    gbcBtnShowFirstContour.gridy = 1;
+    contentPane.add(btnShowFirstContour, gbcBtnShowFirstContour);
     GridBagConstraints gbcBtnChooseSecondImage = new GridBagConstraints();
-    gbcBtnChooseSecondImage.gridwidth = 2;
     gbcBtnChooseSecondImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseSecondImage.gridx = 4;
     gbcBtnChooseSecondImage.gridy = 1;
     contentPane.add(btnChooseSecondImage, gbcBtnChooseSecondImage);
+
+    btnShowSecondContour = new JButton("Show Second Contour");
+    btnShowSecondContour.setEnabled(false);
+    btnShowSecondContour
+        .addMouseListener(new BtnShowSecondContourMouseListener());
+    GridBagConstraints gbcBtnShowSecondContour = new GridBagConstraints();
+    gbcBtnShowSecondContour.insets = new Insets(0, 0, 5, 5);
+    gbcBtnShowSecondContour.gridx = 5;
+    gbcBtnShowSecondContour.gridy = 1;
+    contentPane.add(btnShowSecondContour, gbcBtnShowSecondContour);
 
     scrollPaneShowFirstImage = new JScrollPane();
     GridBagConstraints gbcScrollPaneShowFirstImage = new GridBagConstraints();
@@ -158,77 +180,54 @@ public class DemoSwingGui extends JFrame {
     lblShowSecondImage.addMouseListener(new LblShowSecondImageMouseListener());
     scrollPaneShowSecondImage.setViewportView(lblShowSecondImage);
 
-    btnShowFirstContour = new JButton("Show Contour");
-    btnShowFirstContour
-        .addMouseListener(new BtnShowFirstContourMouseListener());
-    GridBagConstraints gbcBtnShowFirstContour = new GridBagConstraints();
-    gbcBtnShowFirstContour.insets = new Insets(0, 0, 5, 5);
-    gbcBtnShowFirstContour.gridx = 1;
-    gbcBtnShowFirstContour.gridy = 5;
-    contentPane.add(btnShowFirstContour, gbcBtnShowFirstContour);
-
-    btnShowFirstTimeSeries = new JButton("Show Time Series");
-    GridBagConstraints gbcBtnShowFirstTimeSeries = new GridBagConstraints();
-    gbcBtnShowFirstTimeSeries.insets = new Insets(0, 0, 5, 5);
-    gbcBtnShowFirstTimeSeries.gridx = 2;
-    gbcBtnShowFirstTimeSeries.gridy = 5;
-    contentPane.add(btnShowFirstTimeSeries, gbcBtnShowFirstTimeSeries);
-
-    btnShowSecondContour = new JButton("Show Contour");
-    btnShowSecondContour.addMouseListener(new BtnShowSecondContourMouseListener());
-    GridBagConstraints gbcBtnShowSecondContour = new GridBagConstraints();
-    gbcBtnShowSecondContour.insets = new Insets(0, 0, 5, 5);
-    gbcBtnShowSecondContour.gridx = 4;
-    gbcBtnShowSecondContour.gridy = 5;
-    contentPane.add(btnShowSecondContour, gbcBtnShowSecondContour);
-
-    btnShowSecondTimeSeries = new JButton("Show Time Series");
-    GridBagConstraints gbcBtnShowSecondTimeSeries = new GridBagConstraints();
-    gbcBtnShowSecondTimeSeries.insets = new Insets(0, 0, 5, 5);
-    gbcBtnShowSecondTimeSeries.gridx = 5;
-    gbcBtnShowSecondTimeSeries.gridy = 5;
-    contentPane.add(btnShowSecondTimeSeries, gbcBtnShowSecondTimeSeries);
-
-    lblCompareResult = new JLabel("Compare Result: ");
-    GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
-    gbcLblCompareResult.anchor = GridBagConstraints.EAST;
-    gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
-    gbcLblCompareResult.gridx = 1;
-    gbcLblCompareResult.gridy = 7;
-    contentPane.add(lblCompareResult, gbcLblCompareResult);
-
-    lblShowResult = new JLabel("0 %");
-    GridBagConstraints gbcLblShowResult = new GridBagConstraints();
-    gbcLblShowResult.anchor = GridBagConstraints.WEST;
-    gbcLblShowResult.insets = new Insets(0, 0, 5, 5);
-    gbcLblShowResult.gridx = 2;
-    gbcLblShowResult.gridy = 7;
-    contentPane.add(lblShowResult, gbcLblShowResult);
-
-    btnCompare = new JButton("Compare");
-    btnCompare.addMouseListener(new BtnCompareMouseListener());
-    GridBagConstraints gbcBtnCompare = new GridBagConstraints();
-    gbcBtnCompare.gridwidth = 2;
-    gbcBtnCompare.insets = new Insets(0, 0, 5, 5);
-    gbcBtnCompare.gridx = 4;
-    gbcBtnCompare.gridy = 7;
-    contentPane.add(btnCompare, gbcBtnCompare);
-
-    lblDistanceBetweenImages = new JLabel("Distance Between Images: ");
-    GridBagConstraints gbcLblDistanceBetweenImages = new GridBagConstraints();
-    gbcLblDistanceBetweenImages.anchor = GridBagConstraints.EAST;
-    gbcLblDistanceBetweenImages.insets = new Insets(0, 0, 5, 5);
-    gbcLblDistanceBetweenImages.gridx = 1;
-    gbcLblDistanceBetweenImages.gridy = 8;
-    contentPane.add(lblDistanceBetweenImages, gbcLblDistanceBetweenImages);
+    lblDistance = new JLabel("Distance Between Images: ");
+    GridBagConstraints gbcLblDistance = new GridBagConstraints();
+    gbcLblDistance.anchor = GridBagConstraints.EAST;
+    gbcLblDistance.insets = new Insets(0, 0, 5, 5);
+    gbcLblDistance.gridx = 1;
+    gbcLblDistance.gridy = 5;
+    contentPane.add(lblDistance, gbcLblDistance);
 
     lblShowDistance = new JLabel("0");
     GridBagConstraints gbcLblShowDistance = new GridBagConstraints();
     gbcLblShowDistance.anchor = GridBagConstraints.WEST;
     gbcLblShowDistance.insets = new Insets(0, 0, 5, 5);
     gbcLblShowDistance.gridx = 2;
-    gbcLblShowDistance.gridy = 8;
+    gbcLblShowDistance.gridy = 5;
     contentPane.add(lblShowDistance, gbcLblShowDistance);
+
+    btnCompare = new JButton("Compare");
+    btnCompare.addMouseListener(new BtnCompareMouseListener());
+    GridBagConstraints gbcBtnCompare = new GridBagConstraints();
+    gbcBtnCompare.insets = new Insets(0, 0, 5, 5);
+    gbcBtnCompare.gridx = 5;
+    gbcBtnCompare.gridy = 5;
+    contentPane.add(btnCompare, gbcBtnCompare);
+
+    lblCompareResult = new JLabel("Compare Result: ");
+    GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
+    gbcLblCompareResult.anchor = GridBagConstraints.EAST;
+    gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
+    gbcLblCompareResult.gridx = 1;
+    gbcLblCompareResult.gridy = 6;
+    contentPane.add(lblCompareResult, gbcLblCompareResult);
+
+    lblShowPercent = new JLabel("0 %");
+    GridBagConstraints gbcLblShowPercent = new GridBagConstraints();
+    gbcLblShowPercent.anchor = GridBagConstraints.WEST;
+    gbcLblShowPercent.insets = new Insets(0, 0, 5, 5);
+    gbcLblShowPercent.gridx = 2;
+    gbcLblShowPercent.gridy = 6;
+    contentPane.add(lblShowPercent, gbcLblShowPercent);
+
+    btnShowTimeSeries = new JButton("Show Time Series");
+    btnShowTimeSeries.setEnabled(false);
+    btnShowTimeSeries.addMouseListener(new BtnShowTimeSeriesMouseListener());
+    GridBagConstraints gbcBtnShowTimeSeries = new GridBagConstraints();
+    gbcBtnShowTimeSeries.insets = new Insets(0, 0, 5, 5);
+    gbcBtnShowTimeSeries.gridx = 5;
+    gbcBtnShowTimeSeries.gridy = 6;
+    contentPane.add(btnShowTimeSeries, gbcBtnShowTimeSeries);
   }
 
   private class BtnChooseFirstImageMouseListener extends MouseAdapter {
@@ -303,15 +302,27 @@ public class DemoSwingGui extends JFrame {
     @Override
     public void mouseClicked(MouseEvent compareEvent) {
       if (firstFile != null && secondFile != null) {
-        Map<String, Object> firstContourMap = Contour.imageToContour(firstFile.getPath());
-        float[] firstTimeSeries = RadicalScanning.contourToTimeSeries(firstContourMap);
-        Map<String, Object> secondContourMap = Contour.imageToContour(secondFile.getPath()); 
-        float[] secondTimeSeries = RadicalScanning.contourToTimeSeries(secondContourMap);
+        Map<String, Object> firstContourMap = Contour.imageToContour(firstFile
+            .getPath());
+        firstTimeSeries = RadicalScanning.contourToTimeSeries(firstContourMap);
+
+        Map<String, Object> secondContourMap = Contour
+            .imageToContour(secondFile.getPath());
+        secondTimeSeries = RadicalScanning
+            .contourToTimeSeries(secondContourMap);
+
         DynamicTimeWarping dtw = new DynamicTimeWarping(firstTimeSeries,
             secondTimeSeries);
         lblShowDistance.setText(Double.toString(dtw.getDistance()));
+        lblShowDistance.setText(Double.toString(dtw.getDistance()));
+        btnShowFirstContour.setVisible(true);
+        btnShowSecondContour.setVisible(true);
+        btnShowTimeSeries.setEnabled(true);
       } else {
-        System.out.println("You not yet choose file.");
+        Frame frame = new Frame();
+        JOptionPane.showMessageDialog(frame,
+            "Please choose two images before compare.", "Something Error",
+            JOptionPane.ERROR_MESSAGE);
       }
     }
   }
@@ -329,17 +340,30 @@ public class DemoSwingGui extends JFrame {
       }
     }
   }
+
   private class BtnShowSecondContourMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent showSecondContourEvent) {
       if (secondFile != null) {
         File secondContourFile = new File(secondFile.getPath());
-        String secondContourPath = "Images\\dst\\" + secondContourFile.getName();
+        String secondContourPath = "Images\\dst\\"
+            + secondContourFile.getName();
         final IplImage secondContourIplImage = cvLoadImage(secondContourPath);
         final CanvasFrame secondContourCanvas = new CanvasFrame(
             "Second contour image", 1);
         secondContourCanvas.showImage(secondContourIplImage);
       }
+    }
+  }
+
+  private class BtnShowTimeSeriesMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent showSecondTimeSeries) {
+      ShowLineChart chart2 = new ShowLineChart("Second Time Series",
+          "Time Series", secondTimeSeries);
+      chart2.pack();
+      RefineryUtilities.centerFrameOnScreen(chart2);
+      chart2.setVisible(true);
     }
   }
 }
