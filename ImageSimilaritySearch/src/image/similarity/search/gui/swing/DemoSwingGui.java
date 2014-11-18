@@ -4,7 +4,7 @@ import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
 import image.similarity.search.compare.DynamicTimeWarping;
 import image.similarity.search.contour.Contour;
 import image.similarity.search.timeseries.RadicalScanning;
-import image.similarity.search.timeseries.ShowLineChart;
+import image.similarity.search.timeseries.ShowTimeSeries;
 
 import java.awt.EventQueue;
 
@@ -41,6 +41,9 @@ import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.CanvasFrame;
 import org.jfree.ui.RefineryUtilities;
 
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
 @SuppressWarnings("serial")
 public class DemoSwingGui extends JFrame {
 
@@ -59,8 +62,10 @@ public class DemoSwingGui extends JFrame {
   protected JButton btnShowSecondContour;
   protected JLabel lblShowDistance;
   protected JLabel lblDistance;
-  protected JLabel lblCompareResult;
-  protected JLabel lblShowPercent;
+  // protected JLabel lblCompareResult;
+  // protected JLabel lblShowPercent;
+  protected JFileChooser firstFileChooser = new JFileChooser();
+  protected JFileChooser secondFileChooser = new JFileChooser();
   protected float[] firstTimeSeries;
   protected float[] secondTimeSeries;
 
@@ -130,9 +135,9 @@ public class DemoSwingGui extends JFrame {
         .addMouseListener(new BtnChooseSecondImageMouseListener());
 
     btnShowFirstContour = new JButton("Show First Contour");
-    btnShowFirstContour.setEnabled(false);
     btnShowFirstContour
-        .addMouseListener(new BtnShowFirstContourMouseListener());
+        .addActionListener(new BtnShowFirstContourActionListener());
+    btnShowFirstContour.setEnabled(false);
     GridBagConstraints gbcBtnShowFirstContour = new GridBagConstraints();
     gbcBtnShowFirstContour.insets = new Insets(0, 0, 5, 5);
     gbcBtnShowFirstContour.gridx = 2;
@@ -145,9 +150,9 @@ public class DemoSwingGui extends JFrame {
     contentPane.add(btnChooseSecondImage, gbcBtnChooseSecondImage);
 
     btnShowSecondContour = new JButton("Show Second Contour");
-    btnShowSecondContour.setEnabled(false);
     btnShowSecondContour
-        .addMouseListener(new BtnShowSecondContourMouseListener());
+        .addActionListener(new BtnShowSecondContourActionListener());
+    btnShowSecondContour.setEnabled(false);
     GridBagConstraints gbcBtnShowSecondContour = new GridBagConstraints();
     gbcBtnShowSecondContour.insets = new Insets(0, 0, 5, 5);
     gbcBtnShowSecondContour.gridx = 5;
@@ -204,25 +209,25 @@ public class DemoSwingGui extends JFrame {
     gbcBtnCompare.gridy = 5;
     contentPane.add(btnCompare, gbcBtnCompare);
 
-    lblCompareResult = new JLabel("Compare Result: ");
-    GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
-    gbcLblCompareResult.anchor = GridBagConstraints.EAST;
-    gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
-    gbcLblCompareResult.gridx = 1;
-    gbcLblCompareResult.gridy = 6;
-    contentPane.add(lblCompareResult, gbcLblCompareResult);
+    // lblCompareResult = new JLabel("Compare Result: ");
+    // GridBagConstraints gbcLblCompareResult = new GridBagConstraints();
+    // gbcLblCompareResult.anchor = GridBagConstraints.EAST;
+    // gbcLblCompareResult.insets = new Insets(0, 0, 5, 5);
+    // gbcLblCompareResult.gridx = 1;
+    // gbcLblCompareResult.gridy = 6;
+    // contentPane.add(lblCompareResult, gbcLblCompareResult);
 
-    lblShowPercent = new JLabel("0 %");
-    GridBagConstraints gbcLblShowPercent = new GridBagConstraints();
-    gbcLblShowPercent.anchor = GridBagConstraints.WEST;
-    gbcLblShowPercent.insets = new Insets(0, 0, 5, 5);
-    gbcLblShowPercent.gridx = 2;
-    gbcLblShowPercent.gridy = 6;
-    contentPane.add(lblShowPercent, gbcLblShowPercent);
+    // lblShowPercent = new JLabel("0 %");
+    // GridBagConstraints gbcLblShowPercent = new GridBagConstraints();
+    // gbcLblShowPercent.anchor = GridBagConstraints.WEST;
+    // gbcLblShowPercent.insets = new Insets(0, 0, 5, 5);
+    // gbcLblShowPercent.gridx = 2;
+    // gbcLblShowPercent.gridy = 6;
+    // contentPane.add(lblShowPercent, gbcLblShowPercent);
 
     btnShowTimeSeries = new JButton("Show Time Series");
+    btnShowTimeSeries.addActionListener(new BtnShowTimeSeriesActionListener());
     btnShowTimeSeries.setEnabled(false);
-    btnShowTimeSeries.addMouseListener(new BtnShowTimeSeriesMouseListener());
     GridBagConstraints gbcBtnShowTimeSeries = new GridBagConstraints();
     gbcBtnShowTimeSeries.insets = new Insets(0, 0, 5, 5);
     gbcBtnShowTimeSeries.gridx = 5;
@@ -233,7 +238,6 @@ public class DemoSwingGui extends JFrame {
   private class BtnChooseFirstImageMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent chooseFirstImageEvent) {
-      JFileChooser firstFileChooser = new JFileChooser();
       int returnVal = firstFileChooser.showOpenDialog(btnChooseFirstImage);
 
       if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -243,6 +247,11 @@ public class DemoSwingGui extends JFrame {
               .read(new File(firstFile.getPath()));
           lblShowFirstImage.setIcon(new ImageIcon(firstImage));
           scrollPaneShowFirstImage.setViewportView(lblShowFirstImage);
+          
+          lblShowDistance.setText("0");
+          btnShowFirstContour.setEnabled(false);
+          btnShowSecondContour.setEnabled(false);
+          btnShowTimeSeries.setEnabled(false);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -253,7 +262,6 @@ public class DemoSwingGui extends JFrame {
   private class BtnChooseSecondImageMouseListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent chooseSecondImageEvent) {
-      JFileChooser secondFileChooser = new JFileChooser();
       int returnVal = secondFileChooser.showOpenDialog(lblShowSecondImage);
 
       if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -263,6 +271,11 @@ public class DemoSwingGui extends JFrame {
               .getPath()));
           lblShowSecondImage.setIcon(new ImageIcon(secondImage));
           scrollPaneShowSecondImage.setViewportView(lblShowSecondImage);
+          
+          lblShowDistance.setText("0");
+          btnShowFirstContour.setEnabled(false);
+          btnShowSecondContour.setEnabled(false);
+          btnShowTimeSeries.setEnabled(false);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -314,9 +327,8 @@ public class DemoSwingGui extends JFrame {
         DynamicTimeWarping dtw = new DynamicTimeWarping(firstTimeSeries,
             secondTimeSeries);
         lblShowDistance.setText(Double.toString(dtw.getDistance()));
-        lblShowDistance.setText(Double.toString(dtw.getDistance()));
-        btnShowFirstContour.setVisible(true);
-        btnShowSecondContour.setVisible(true);
+        btnShowFirstContour.setEnabled(true);
+        btnShowSecondContour.setEnabled(true);
         btnShowTimeSeries.setEnabled(true);
       } else {
         Frame frame = new Frame();
@@ -327,9 +339,8 @@ public class DemoSwingGui extends JFrame {
     }
   }
 
-  private class BtnShowFirstContourMouseListener extends MouseAdapter {
-    @Override
-    public void mouseClicked(MouseEvent showFirstContourEvent) {
+  private class BtnShowFirstContourActionListener implements ActionListener {
+    public void actionPerformed(ActionEvent arg0) {
       if (firstFile != null) {
         File firstContourFile = new File(firstFile.getPath());
         String firstContourPath = "Images\\dst\\" + firstContourFile.getName();
@@ -341,9 +352,8 @@ public class DemoSwingGui extends JFrame {
     }
   }
 
-  private class BtnShowSecondContourMouseListener extends MouseAdapter {
-    @Override
-    public void mouseClicked(MouseEvent showSecondContourEvent) {
+  private class BtnShowSecondContourActionListener implements ActionListener {
+    public void actionPerformed(ActionEvent arg0) {
       if (secondFile != null) {
         File secondContourFile = new File(secondFile.getPath());
         String secondContourPath = "Images\\dst\\"
@@ -356,14 +366,14 @@ public class DemoSwingGui extends JFrame {
     }
   }
 
-  private class BtnShowTimeSeriesMouseListener extends MouseAdapter {
-    @Override
-    public void mouseClicked(MouseEvent showSecondTimeSeries) {
-      ShowLineChart chart2 = new ShowLineChart("Second Time Series",
-          "Time Series", secondTimeSeries);
-      chart2.pack();
-      RefineryUtilities.centerFrameOnScreen(chart2);
-      chart2.setVisible(true);
+  private class BtnShowTimeSeriesActionListener implements ActionListener {
+    public void actionPerformed(ActionEvent arg0) {
+//      ShowLineChart chart2 = new ShowLineChart("Second Time Series",
+//          "Time Series", secondTimeSeries);
+      ShowTimeSeries chart = new ShowTimeSeries("Time Series Window", firstTimeSeries, secondTimeSeries);
+      chart.pack();
+      RefineryUtilities.centerFrameOnScreen(chart);
+      chart.setVisible(true);
     }
   }
 }

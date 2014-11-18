@@ -1,15 +1,16 @@
 package image.similarity.search.timeseries;
 
+import javax.swing.JFrame;
+
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 @SuppressWarnings("serial")
-public class ShowLineChart extends ApplicationFrame {
+public class ShowLineChart extends JFrame {
   public ShowLineChart(String applicationTitle, String chartTitle, float[] distance) {
     super(applicationTitle);
     JFreeChart lineChart = ChartFactory.createLineChart(chartTitle, "Time Series",
@@ -23,7 +24,6 @@ public class ShowLineChart extends ApplicationFrame {
 
   private DefaultCategoryDataset createDataset(float[] distance) {
     DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-//    dataset.addValue(15, "schools", "1970");
     for (int i = 0; i < distance.length; i++) {
       dataset.addValue(distance[i], "distance", Integer.toString(i));
     }
