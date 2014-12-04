@@ -242,9 +242,14 @@ public class DemoSwingGui extends JFrame {
 
       if (returnVal == JFileChooser.APPROVE_OPTION) {
         firstFile = firstFileChooser.getSelectedFile();
+        System.out.println(firstFile.length());
         try {
           BufferedImage firstImage = ImageIO
               .read(new File(firstFile.getPath()));
+          System.out.println("Use BufferedImage: ");          
+          System.out.println(firstImage.getHeight());
+          System.out.println(firstImage.getWidth());
+          System.out.println(firstImage.getType());
           lblShowFirstImage.setIcon(new ImageIcon(firstImage));
           scrollPaneShowFirstImage.setViewportView(lblShowFirstImage);
           
@@ -289,6 +294,11 @@ public class DemoSwingGui extends JFrame {
       if (showFirstImageEvent.getClickCount() % 2 == 0) {
         if (firstFile != null) {
           final IplImage firstIplImage = cvLoadImage(firstFile.getPath());
+          System.out.println("Use cvLoadImage: ");
+          System.out.println(firstIplImage.depth());
+          System.out.println(firstIplImage.height());
+          System.out.println(firstIplImage.width());
+          System.out.println(firstIplImage.imageSize());
           final CanvasFrame firstCanvas = new CanvasFrame("First Image", 1);
           // firstCanvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
           firstCanvas.showImage(firstIplImage);

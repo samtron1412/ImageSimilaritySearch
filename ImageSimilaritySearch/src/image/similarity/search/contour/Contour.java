@@ -53,8 +53,8 @@ public class Contour {
       }
       contours = contours.h_next();
     }
-    System.out.println("Largest Area: " + largestArea);
-    System.out.println("Largest Contours: " + largestContour.total());
+//    System.out.println("Largest Area: " + largestArea);
+//    System.out.println("Largest Contours: " + largestContour.total());
 
     cvDrawContours(src, largestContour, CvScalar.YELLOW, CvScalar.RED, -1, 1,
         CV_AA);
