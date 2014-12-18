@@ -325,6 +325,14 @@ public class DemoSwingGui extends JFrame {
     @Override
     public void mouseClicked(MouseEvent compareEvent) {
       if (firstFile != null && secondFile != null) {
+        try {
+          File theDir = new File("Images\\dst\\");
+          theDir.mkdirs();
+          System.out.println("The dir is created!!!");
+        } catch (SecurityException se) {
+          se.printStackTrace();
+        }
+        
         Map<String, Object> firstContourMap = Contour.imageToContour(firstFile
             .getPath());
         firstTimeSeries = RadicalScanning.contourToTimeSeries(firstContourMap);
