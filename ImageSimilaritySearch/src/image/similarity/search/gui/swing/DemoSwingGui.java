@@ -1,8 +1,8 @@
 package image.similarity.search.gui.swing;
 
 import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
-import image.similarity.search.compare.DynamicTimeWarping;
 import image.similarity.search.contour.Contour;
+import image.similarity.search.distance.DynamicTimeWarping;
 import image.similarity.search.timeseries.RadicalScanning;
 import image.similarity.search.timeseries.ShowTimeSeries;
 

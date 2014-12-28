@@ -1,4 +1,4 @@
-package image.similarity.search.compare;
+package image.similarity.search.distance;
 
 public class DynamicTimeWarping {
   protected float[] seq1;

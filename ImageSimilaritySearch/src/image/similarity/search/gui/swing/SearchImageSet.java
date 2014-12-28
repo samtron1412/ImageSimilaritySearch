@@ -1,6 +1,6 @@
 package image.similarity.search.gui.swing;
 
-import image.similarity.search.common.CompareImages;
+import image.similarity.search.compare.CompareImages;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -29,9 +29,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JTextPane;
+import javax.swing.JScrollPane;
 
 public class SearchImageSet extends JFrame {
 
@@ -48,7 +54,8 @@ public class SearchImageSet extends JFrame {
   protected File image;
   protected JButton btnSearch;
   protected File[] listImages;
-  protected JTextPane txtpnPathOfImages;
+  protected JScrollPane scrollPane;
+  protected JTextPane textPane;
 
   /**
    * Launch the application.
@@ -93,12 +100,12 @@ public class SearchImageSet extends JFrame {
     contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
     setContentPane(contentPane);
     GridBagLayout gbl_contentPane = new GridBagLayout();
-    gbl_contentPane.columnWidths = new int[] { 0, 0, 0, 0, 0 };
+    gbl_contentPane.columnWidths = new int[] { 0, 0, 0, 0, 0, 0 };
     gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 0.0, 1.0,
+    gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 0.0, 1.0, 0.0,
         Double.MIN_VALUE };
     gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, Double.MIN_VALUE };
+        1.0, 0.0, Double.MIN_VALUE };
     contentPane.setLayout(gbl_contentPane);
 
     btnChooseImageFolder = new JButton("Choose Image Folder");
@@ -113,7 +120,7 @@ public class SearchImageSet extends JFrame {
     btnChooseImage = new JButton("Choose Image");
     btnChooseImage.addActionListener(new BtnChooseImageActionListener());
     GridBagConstraints gbcBtnChooseImage = new GridBagConstraints();
-    gbcBtnChooseImage.insets = new Insets(0, 0, 5, 0);
+    gbcBtnChooseImage.insets = new Insets(0, 0, 5, 5);
     gbcBtnChooseImage.gridx = 3;
     gbcBtnChooseImage.gridy = 1;
     contentPane.add(btnChooseImage, gbcBtnChooseImage);
@@ -131,7 +138,7 @@ public class SearchImageSet extends JFrame {
     txtPathOfImageInput = new JTextField();
     txtPathOfImageInput.setText("Path of image input");
     GridBagConstraints gbcTxtPathOfImageInput = new GridBagConstraints();
-    gbcTxtPathOfImageInput.insets = new Insets(0, 0, 5, 0);
+    gbcTxtPathOfImageInput.insets = new Insets(0, 0, 5, 5);
     gbcTxtPathOfImageInput.fill = GridBagConstraints.HORIZONTAL;
     gbcTxtPathOfImageInput.gridx = 3;
     gbcTxtPathOfImageInput.gridy = 3;
@@ -143,20 +150,22 @@ public class SearchImageSet extends JFrame {
     btnSearch.setEnabled(false);
     GridBagConstraints gbcBtnSearch = new GridBagConstraints();
     gbcBtnSearch.gridwidth = 3;
-    gbcBtnSearch.insets = new Insets(0, 0, 5, 0);
+    gbcBtnSearch.insets = new Insets(0, 0, 5, 5);
     gbcBtnSearch.gridx = 1;
     gbcBtnSearch.gridy = 5;
     contentPane.add(btnSearch, gbcBtnSearch);
     
-    txtpnPathOfImages = new JTextPane();
-    txtpnPathOfImages.setText("Path of images result");
-    GridBagConstraints gbcTxtpnPathOfImages = new GridBagConstraints();
-    gbcTxtpnPathOfImages.gridwidth = 3;
-    gbcTxtpnPathOfImages.insets = new Insets(0, 0, 0, 5);
-    gbcTxtpnPathOfImages.fill = GridBagConstraints.BOTH;
-    gbcTxtpnPathOfImages.gridx = 1;
-    gbcTxtpnPathOfImages.gridy = 7;
-    contentPane.add(txtpnPathOfImages, gbcTxtpnPathOfImages);
+    scrollPane = new JScrollPane();
+    GridBagConstraints gbcScrollPane = new GridBagConstraints();
+    gbcScrollPane.insets = new Insets(0, 0, 5, 5);
+    gbcScrollPane.gridwidth = 3;
+    gbcScrollPane.fill = GridBagConstraints.BOTH;
+    gbcScrollPane.gridx = 1;
+    gbcScrollPane.gridy = 6;
+    contentPane.add(scrollPane, gbcScrollPane);
+    
+    textPane = new JTextPane();
+    scrollPane.setViewportView(textPane);
   }
 
   private class BtnChooseImageFolderActionListener implements ActionListener {
@@ -202,9 +211,26 @@ public class SearchImageSet extends JFrame {
   
   private class BtnSearchActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      HashMap<String, Double> imageLst = CompareImages.compareWithSetOfImages(image, listImages);
+      // calculate algorithm running time
+      long startTime = System.currentTimeMillis();
+      LinkedHashMap<String, Double> imageLst = CompareImages.compareWithSetOfImages(image, listImages);
+      long endTime = System.currentTimeMillis();
+      
+      // build output string
+      System.out.println("That took " + (endTime - startTime) + " milliseconds");
       System.out.println(imageLst.size());
       System.out.println(imageLst.toString());
+      String str = "That took " + (endTime - startTime) + " milliseconds\n";
+      Set set = imageLst.entrySet();
+      Iterator i = set.iterator();
+      while (i.hasNext()) {
+        Map.Entry img = (Map.Entry)i.next(); 
+        str += "\nPath: " + img.getKey() + "\n";
+        str += "Distance: " + img.getValue() + "\n";
+      }
+      
+      // return output string
+      textPane.setText(str);
     }
   }
 }
